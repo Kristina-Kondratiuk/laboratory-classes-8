@@ -1,4 +1,5 @@
 const { getDatabase } = require("../database");
+//const Cart = require("./Cart");
 
 const COLLECTION_NAME = "products";
 
@@ -7,6 +8,25 @@ class Product {
     this.name = name;
     this.description = description;
     this.price = price;
+  }
+
+  async save() {
+    const db = getDatabase();
+
+    try {
+      const existing = await db.collection(COLLECTION_NAME).findOne({ name: this.name });
+      if (existing) {
+        throw new Error(`Product "${this.name}" already exists`);
+      }
+
+      await db.collection(COLLECTION_NAME).insertOne({
+        name: this.name,
+        description: this.description,
+        price: this.price
+      });
+    } catch (error) {
+      console.error("Error occurred while saving product:", error);
+    }
   }
 
   static async getAll() {
@@ -54,8 +74,9 @@ class Product {
 
     try {
       await db.collection(COLLECTION_NAME).deleteOne({ name });
+      await Cart.deleteProductByName(name);
     } catch (error) {
-      console.error("Error occurred while deleting product");
+      console.error("Error occurred while deleting product and cleaning cart");
     }
   }
 

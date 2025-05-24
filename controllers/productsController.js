@@ -6,7 +6,7 @@ const { STATUS_CODE } = require("../constants/statusCode");
 const cartController = require("./cartController");
 
 exports.getProductsView = async (request, response) => {
-  const cartCount = cartController.getProductsCount();
+  const cartCount = await cartController.getProductsCount();
   const products = await Product.getAll();
 
   response.render("products.ejs", {
@@ -20,7 +20,7 @@ exports.getProductsView = async (request, response) => {
 };
 
 exports.getAddProductView = async (request, response) => {
-  const cartCount = cartController.getProductsCount();
+  const cartCount = await cartController.getProductsCount();
 
   response.render("add-product.ejs", {
     headTitle: "Shop - Add product",
@@ -32,7 +32,7 @@ exports.getAddProductView = async (request, response) => {
 };
 
 exports.getNewProductView = async (request, response) => {
-  const cartCount = cartController.getProductsCount();
+  const cartCount = await cartController.getProductsCount();
   const newestProduct = await Product.getLast();
 
   response.render("new-product.ejs", {
@@ -46,7 +46,7 @@ exports.getNewProductView = async (request, response) => {
 };
 
 exports.getProductView = async (request, response) => {
-  const cartCount = cartController.getProductsCount();
+  const cartCount = await cartController.getProductsCount();
   const name = request.params.name;
 
   const product = await Product.findByName(name);
@@ -66,4 +66,18 @@ exports.deleteProduct = async (request, response) => {
   await Product.deleteByName(name);
 
   response.status(STATUS_CODE.OK).json({ success: true });
+};
+
+exports.addProduct = async (request, response) => {
+  const { name, description, price } = request.body;
+
+  try {
+    const product = new Product(name, description, parseFloat(price));
+    await product.save();
+
+    response.redirect(STATUS_CODE.FOUND, "/products/new");
+  } catch (err) {
+    console.error(err);
+    response.redirect("/products/add");
+  }
 };
